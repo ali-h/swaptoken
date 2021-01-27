@@ -108,10 +108,19 @@ const pushPage = async function (href) {
 }
 
 // if the user is logges in, remove the login button
-const refreshUser = function () {
+const refreshUser = async function () {
   const user = localStorage.getItem('user');
 
   if (user) {
+    // get the users utility balance
+    let balance = '0 SWAP.HIVE'
+    const res = await ssc.findOne('tokens', 'balances', {
+      account: user,
+      symbol: 'SWAP.HIVE'
+    });
+    if (res) balance = `${n(res.balance)} SWAP.HIVE`;
+    $("#user_balance").text(balance);
+
     $('#login_nav').addClass('d-none');
     $('#userNav').text(`@${user}`);
     $('.logged_in').each(function () {

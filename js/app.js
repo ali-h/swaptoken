@@ -1,5 +1,5 @@
 $(window).bind('load', async () => {
-  refreshUser();
+  await refreshUser();
   await stateManage();
 });
 

@@ -65,6 +65,9 @@ header .big {
 table tbody tr:nth-child(odd) {
   background-color: rgba(0,0,0,.05);
 }
+th {
+  white-space: nowrap;
+}
 .tbl_btn {
   font-weight: bold;
   background-color: var(--primary);
@@ -75,7 +78,11 @@ table tbody tr:nth-child(odd) {
 }
 .btn {
   margin: 0.1em;
+  font-weight: bold;
 }
 .case-fix {
   text-transform: capitalize;
+}
+.dark_secondary {
+  background-color: #1b1e29 !important;
 }
