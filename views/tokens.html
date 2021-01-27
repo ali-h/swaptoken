@@ -1,0 +1,145 @@
+<header class="d-flex flex-wrap justify-content-between align-items-center">
+  <div>
+    <span class="big">Tokens</span>
+  </div>
+  <div class="d-flex align-items-center">
+    <input id="search" type="text" placeholder="Search" class="d-none mb-1 ml-3 form-control bg-dark text-white border-0 btn-outline-warning">
+  </div>
+</header>
+
+<div id="card_loading" class="d-flex justify-content-center">
+  <div class="spinner-border"></div>
+</div>
+
+<table class="table darker table-responsive table-borderless d-none">
+  <thead>
+    <tr>
+      <th style="width: 8% !important;">SYMBOL</th>
+      <th style="width: 42% !important;">NAME</th>
+      <th style="width: 5% !important;">PRICE</th>
+      <th style="width: 10% !important;"> M CAP</th>
+      <th style="width: 5% !important;">% CHANGE</th>
+      <th style="width: 5% !important;">24H VOL</th>
+      <th style="width: 25% !important;"></th>
+    </tr>
+  </thead>
+  <tbody id="tokens_table">
+  </tbody>
+</table>
+
+<script>
+  async function tokens_page () {
+    const tokens = await getData('tokens', 'tokens');
+    const metrics = await getData('market', 'metrics');
+
+    function renderTable(list) {
+      let table = ``;
+      const isChangePositive = (change) => {
+        const n = change.replace('%', '');
+        if (BigNumber(n).lt(0)) return false;
+
+        return true;
+      };
+
+      for (const token of list) {
+        table +=
+        `<tr>
+          <td>${token.symbol}</td>
+          <td>
+            ${token.name}
+          </td>
+          <td>
+            $${n(token.price)}
+          </td>
+          <td>$${n(token.marketCap)}</td>
+          <td class="${isChangePositive(token.change) ? 'text-success' : 'text-danger'}">${token.change}</td>
+          <td>$${n(token.volume)}</td>
+          <td class="d-flex flex-row">
+            <a type="button" href="?p=info&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Info">
+              <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+                <circle cx="8" cy="4.5" r="1"/>
+              </svg>
+            </a>
+            <a type="button" href="?p=market&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Market">
+              <svg width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </a>
+            <a type="button" href="?p=richlist&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Buy">
+              <svg width="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+              </svg>
+            </a>
+          </td>
+        </tr>`;
+      }
+      $('#tokens_table').html(table);
+    }
+
+    const list = [];
+    const hivePrice = await getHivePrice();
+    for (const token of tokens) {
+      const metric = metrics.find(el => el.symbol === token.symbol);
+
+      // calculate metrics
+      const price = metric ?
+        BigNumber(metric.lastPrice)
+          .multipliedBy(hivePrice)
+          .toFixed(3)
+          .toString()
+        : '0';
+      const marketCap = BigNumber(token.circulatingSupply)
+        .multipliedBy(price)
+        .toFixed(3)
+        .toString();
+      const change = metric ? metric.priceChangePercent : '0';
+      const volume = metric ?
+        BigNumber(metric.volume)
+          .multipliedBy(hivePrice)
+          .toFixed(3)
+          .toString()
+        : '0';
+      
+      list.push({
+        symbol: token.symbol,
+        name: token.name,
+        price,
+        marketCap,
+        change,
+        volume
+      });
+    }
+
+    // sort the list with 24h volume (desc)
+    list.sort(function (a, b) {
+      if (BigNumber(a.volume).lt(b.volume)) return 1;
+      if (BigNumber(b.volume).lt(a.volume)) return -1;
+
+      return 0;
+    });
+
+    renderTable(list);
+    $('#card_loading').remove();
+    $('#search').removeClass('d-none');
+    $('table').removeClass('d-none');
+
+    $(document).on('keyup', '#search', function () {
+      const searchWord = $(this).val().toLowerCase().trim();
+      const filteredTokens = [];
+      for (const token of list) {
+        if (token.symbol.toLowerCase().includes(searchWord)) {
+          filteredTokens.push(token);
+        }
+      }
+
+      // re-render table with filtered records
+      renderTable(filteredTokens);
+    });
+  }
+  tokens_page();
+</script>
