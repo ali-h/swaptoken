@@ -1,0 +1,318 @@
+<div id="card_loading" class="d-flex justify-content-center">
+  <div class="spinner-border"></div>
+</div>
+<span id="err" class="d-none">Can't find market for this token</span>
+<div id="pg" class="d-none">
+  <header class="d-flex flex-wrap justify-content-between align-items-center text-center mb-3">
+    <div class="d-flex flex-column align-items-center">
+      <div class="mb-1">
+        <span class="mid">Market</span>
+      </div>
+      <input id="tokens" type="text" class="mb-1 ml-3 form-control bg-dark text-white border-0 btn-outline-warning">
+    </div>
+    <div class="d-flex flex-column">
+      <span class="mid">Bid</span>
+      <span id="bid"></span>
+    </div>
+    <div class="d-flex flex-column">
+      <span class="mid">Ask</span>
+      <span id="ask"></span>
+    </div>
+    <div class="d-flex flex-column">
+      <span class="mid">Last</span>
+      <span id="last"></span>
+    </div>
+    <div class="d-flex flex-column">
+      <span class="mid">24H Volume</span>
+      <span id="volume"></span>
+    </div>
+  </header>
+  
+  <div class="d-flex w-100 mb-2">
+    <div class="d-flex flex-column flex-grow-1 mr-3">
+      <span class="big">Buy <span class="t_n"></span></span>
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="w-25">
+          <span>Price</span>
+        </div>
+        <div class="input-group">
+          <input id="buy_price" type="number" placeholder="0.00" class="form-control">
+          <div class="input-group-append">
+            <span class="input-group-text"><span class="t_n"></span>/HIVE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="w-25">
+          <span>Quantity</span>
+        </div>
+        <div class="input-group">
+          <input id="buy_quantity" type="number" placeholder="0.00" class="form-control">
+          <div class="input-group-append">
+            <span class="input-group-text t_n"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="w-25">
+          <span>Total</span>
+        </div>
+        <div class="input-group">
+          <input id="buy_total" type="number" placeholder="0.00" class="form-control">
+          <div class="input-group-append">
+            <span class="input-group-text">HIVE</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" class="btn btn-success float-right" id="buy">Buy</button>
+      </div>
+    </div>
+    <div class="d-flex flex-column flex-grow-1 ml-3">
+      <span class="big">Sell <span class="t_n"></span></span>
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="w-25">
+          <span>Price</span>
+        </div>
+        <div class="input-group">
+          <input id="sell_price" type="number" placeholder="0.00" class="form-control">
+          <div class="input-group-append">
+            <span class="input-group-text"><span class="t_n"></span>/HIVE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="w-25">
+          <span>Quantity</span>
+        </div>
+        <div class="input-group">
+          <input id="sell_quantity" type="number" placeholder="0.00" class="form-control">
+          <div class="input-group-append">
+            <span class="input-group-text t_n"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="w-25">
+          <span>Total</span>
+        </div>
+        <div class="input-group">
+          <input id="sell_total" type="number" placeholder="0.00" class="form-control">
+          <div class="input-group-append">
+            <span class="input-group-text">HIVE</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" class="btn btn-danger float-right" id="sell">Sell</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mb-3">
+    <span>
+      Balance: <span id="hive_balance"></span> SWAP.HIVE and <span id="t_balance"></span> <span class="t_n"></span></span>
+    </span>
+  </div>
+
+  <div class="d-flex w-100 flex-wrap">
+    <div class="d-flex flex-column flex-grow-1 mr-3">
+      <span class="big">Buy Orders</span>
+      <table class="table darker table-borderless">
+        <thead>
+          <tr>
+            <th style="width: 25%;">TOTAL HIVE</th>
+            <th style="width: 25%;">HIVE</th>
+            <th style="width: 25%;"><span class="t_n"></span></th>
+            <th style="width: 25%;">BID</th>
+          </tr>
+        </thead>
+        <tbody id="buy_book">
+        </tbody>
+      </table>
+    </div>
+    <div class="d-flex flex-column flex-grow-1 ml-3">
+      <span class="big">Sell Orders</span>
+      <table class="table darker table-borderless">
+        <thead>
+          <tr>
+            <th style="width: 25%;">ASK</th>
+            <th style="width: 25%;"><span class="t_n"></span></th>
+            <th style="width: 25%;">HIVE</th>
+            <th style="width: 25%;">TOTAL HIVE</th>
+          </tr>
+        </thead>
+        <tbody id="sell_book">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="d-flex flex-column w-100">
+    <span class="big">Open Orders</span>
+    <table class="table darker table-borderless">
+      <thead>
+        <tr>
+          <th style="width: 20%;">DATE</th>
+          <th style="width: 10%;">TYPE</th>
+          <th style="width: 20%;"><span class="t_n"></span></th>
+          <th style="width: 20%;">PRICE</th>
+          <th style="width: 30%;">TOTAL HIVE</th>
+        </tr>
+      </thead>
+      <tbody id="open_orders">
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex flex-column w-100">
+    <span class="big">Trade History</span>
+    <table class="table darker table-borderless">
+      <thead>
+        <tr>
+          <th style="width: 20%;">DATE</th>
+          <th style="width: 10%;">TYPE</th>
+          <th style="width: 20%;"><span class="t_n"></span></th>
+          <th style="width: 20%;">PRICE</th>
+          <th style="width: 30%;">TOTAL HIVE</th>
+        </tr>
+      </thead>
+      <tbody id="trade_history">
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  async function tokens_page () {
+    const url = new URL(location.href);
+    const symbol = url.searchParams.get('symbol');
+
+    if (!symbol) {
+      url.searchParams.append('symbol', 'BEE');
+      await pushPage(url.href);
+      return;
+    }
+
+    $('#tokens').attr('placeholder', symbol);
+    const tokens = await getData('tokens', 'tokens');
+    const metric = await ssc.findOne('market', 'metrics', {
+      symbol
+    });
+
+    if (!metric) {
+      $('#err').removeClass('d-none');
+      $('#card_loading').remove();
+      return;
+    }
+
+    const buyBook = [];
+    const sellBook = [];
+    const buyOrders = await ssc.find('market', 'buyBook', {
+      symbol
+    }, 100, 0, [{index: "priceDec", descending: true}]);
+    const sellOrders = await ssc.find('market', 'sellBook', {
+      symbol
+    }, 100, 0, [{index: "priceDec", descending: false}]);
+
+    function buildBook (type, Orders) {
+      let id = 0;
+      let hive = '0';
+      let total_hive = '0';
+      let quantity = '0';
+      let price = 0;
+      for (let i = 0; i < Orders.length; i += 1) {
+        const order = Orders[i];
+        if (i === 0) price = parseFloat(order.price);
+
+        const hiveForThis = BigNumber(order.quantity).multipliedBy(price);
+        if (price === parseFloat(order.price)) {
+          quantity = BigNumber(quantity).plus(order.quantity);
+          hive = BigNumber(hive).plus(hiveForThis);
+          total_hive = BigNumber(total_hive).plus(hiveForThis);
+        } else {
+          if (type === 'buy') {
+            $(`#buy_book`).append(
+              `
+              <tr>
+                <td>${parseFloat(total_hive.toFixed(5))}</td>
+                <td>${parseFloat(hive.toFixed(5))}</td>
+                <td>${parseFloat(quantity)}</td>
+                <td class="select_market text-right"><a href="#">${BigNumber(price).toFixed(6)}</a></td>
+              </tr>
+              `
+            );
+          } else {
+            $(`#sell_book`).append(
+              `
+              <tr>
+                <td class="select_market"><a href="#">${BigNumber(price).toFixed(6)}</a></td>
+                <td>${parseFloat(quantity)}</td>
+                <td>${parseFloat(hive.toFixed(5))}</td>
+                <td>${parseFloat(total_hive.toFixed(5))}</td>
+              </tr>
+              `
+            );
+          }
+          id++;
+          if (id === 15) break;
+          price = parseFloat(order.price);
+          quantity = order.quantity;
+          hive = hiveForThis;
+          total_hive = BigNumber(total_hive).plus(hiveForThis);
+        }
+      }
+    }
+
+    buildBook('buy', buyOrders);
+    buildBook('sell', sellOrders);
+
+    const balances = await getData('tokens', 'balances', {
+      account: user
+    });
+    let hive_balance = balances.find(el => el.symbol === 'SWAP.HIVE');
+    let t_balance = balances.find(el => el.symbol === symbol);
+    if (hive_balance) hive_balance = hive_balance.balance;
+    else hive_balance = '0';
+    if (t_balance) t_balance = t_balance.balance;
+    else t_balance = '0';
+    $('#hive_balance').text(hive_balance);
+    $('#t_balance').text(t_balance);
+
+    let open_orders = [];
+    open_orders.push(...await getData('market', 'sellBook', {
+      account: user,
+      symbol
+    }));
+    open_orders.push(...await getData('market', 'buyBook', {
+      account: user,
+      symbol
+    }));
+
+    // sort the orders with time (desc)
+    open_orders.sort(function (a, b) {
+      if (a.timestamp < b.timestamp) return 1;
+      if (b.timestamp < a.timestamp) return -1;
+
+      return 0;
+    });
+
+    $('.t_n').each(function () {
+      $(this).text(symbol);
+    });
+    $('#bid').text(metric.highestBid);
+    $('#ask').text(metric.lowestAsk);
+    $('#last').text(metric.lastPrice);
+    $('#volume').text(metric.volume);
+
+    $('#card_loading').remove();
+    $('#pg').removeClass('d-none');
+  }
+  tokens_page();
+</script>
