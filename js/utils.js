@@ -1,5 +1,6 @@
 let toast_id = 0;
-const only_login_pages = ['wallet', 'open-orders'];
+let user = null;
+const only_login_pages = ['wallet'];
 const no_access_pages = ['unauthorized'];
 const ssc = new SSC('https://api.hive-engine.com/rpc');
 
@@ -109,7 +110,7 @@ const pushPage = async function (href) {
 
 // if the user is logges in, remove the login button
 const refreshUser = async function () {
-  const user = localStorage.getItem('user');
+  user = localStorage.getItem('user');
 
   if (user) {
     // get the users utility balance
