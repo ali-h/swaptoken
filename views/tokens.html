@@ -14,13 +14,13 @@
 <table class="table darker table-responsive table-borderless d-none">
   <thead>
     <tr>
-      <th>SYMBOL</th>
-      <th>NAME</th>
-      <th>PRICE</th>
-      <th>M CAP</th>
-      <th>% CHANGE</th>
-      <th>24H VOL</th>
-      <th></th>
+      <th style="width: 5%;">SYMBOL</th>
+      <th style="width: 35%;">NAME</th>
+      <th style="width: 10%;">PRICE</th>
+      <th style="width: 15%;">M CAP</th>
+      <th style="width: 5%;">% CHANGE</th>
+      <th style="width: 15%;">24H VOL</th>
+      <th style="width: 5%;"></th>
     </tr>
   </thead>
   <tbody id="tokens_table">
@@ -54,25 +54,17 @@
           <td>$${n(token.marketCap)}</td>
           <td class="${isChangePositive(token.change) ? 'text-success' : 'text-danger'}">${token.change}</td>
           <td>$${n(token.volume)}</td>
-          <td class="d-flex flex-row">
+          <td class="d-flex flex-row float-right">
             <a type="button" href="?p=info&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Info">
-              <svg width="1.1em" height="1.1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                 <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
                 <circle cx="8" cy="4.5" r="1"/>
               </svg>
             </a>
             <a type="button" href="?p=market&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Market">
-              <svg width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </a>
-            <a type="button" href="?p=richlist&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Buy">
-              <svg width="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                <circle cx="9" cy="7" r="4"></circle>
               </svg>
             </a>
           </td>
@@ -97,7 +89,7 @@
         .multipliedBy(price)
         .toFixed(3)
         .toString();
-      const change = metric ? metric.priceChangePercent : '0';
+      const change = metric ? metric.priceChangePercent : '0%';
       const volume = metric ?
         BigNumber(metric.volume)
           .multipliedBy(hivePrice)
