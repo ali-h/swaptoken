@@ -1,14 +1,17 @@
 <div id="card_loading" class="d-flex justify-content-center">
   <div class="spinner-border"></div>
 </div>
-<span id="err" class="d-none">Can't find market for this token</span>
+<div id="err" class="d-none text-center">
+  <span>Can't find market for this token</span>
+  <input id="tokenERR" type="text" class="mb-1 ml-3 form-control bg-dark text-white border-0 btn-outline-warning">
+</div>
 <div id="pg" class="d-none">
   <header class="d-flex flex-wrap justify-content-between align-items-center text-center mb-3">
     <div class="d-flex flex-column align-items-center">
       <div class="mb-1">
         <span class="mid">Market</span>
       </div>
-      <input id="tokens" type="text" class="mb-1 ml-3 form-control bg-dark text-white border-0 btn-outline-warning">
+      <input id="token" type="text" class="mb-1 ml-3 form-control bg-dark text-white border-0 btn-outline-warning">
     </div>
     <div class="d-flex flex-column">
       <span class="mid">Bid</span>
@@ -115,7 +118,7 @@
     </div>
   </div>
 
-  <div class="text-center mb-3">
+  <div class="text-center mb-3" id="balances">
     <span>
       Balance: <span id="hive_balance"></span> SWAP.HIVE and <span id="t_balance"></span> <span class="t_n"></span></span>
     </span>
@@ -193,7 +196,7 @@
 <script>
   async function tokens_page () {
     const url = new URL(location.href);
-    const symbol = url.searchParams.get('symbol');
+    const symbol = url.searchParams.get('symbol').toUpperCase();
 
     if (!symbol) {
       url.searchParams.append('symbol', 'BEE');
@@ -201,8 +204,17 @@
       return;
     }
 
-    $('#tokens').attr('placeholder', symbol);
-    const tokens = await getData('tokens', 'tokens');
+    $('#token, #tokenERR').attr('placeholder', symbol);
+    $('#token, #tokenERR').on('keyup', async function (e) {
+      const value = $(this).val();
+      if (value === '' || value.length < 3) return;
+
+      if (e.keyCode === 13) {
+        url.searchParams.set('symbol', value.toUpperCase());
+        await pushPage(url.href);
+        return;
+      }
+    });
     const metric = await ssc.findOne('market', 'metrics', {
       symbol
     });
@@ -274,26 +286,37 @@
     buildBook('buy', buyOrders);
     buildBook('sell', sellOrders);
 
-    const balances = await getData('tokens', 'balances', {
-      account: user
-    });
-    let hive_balance = balances.find(el => el.symbol === 'SWAP.HIVE');
-    let t_balance = balances.find(el => el.symbol === symbol);
-    if (hive_balance) hive_balance = hive_balance.balance;
-    else hive_balance = '0';
-    if (t_balance) t_balance = t_balance.balance;
-    else t_balance = '0';
-    $('#hive_balance').text(hive_balance);
-    $('#t_balance').text(t_balance);
+    if (user !== null) {
+      const balances = await getData('tokens', 'balances', {
+        account: user
+      });
+      let hive_balance = balances.find(el => el.symbol === 'SWAP.HIVE');
+      let t_balance = balances.find(el => el.symbol === symbol);
+      if (hive_balance) hive_balance = hive_balance.balance;
+      else hive_balance = '0';
+      if (t_balance) t_balance = t_balance.balance;
+      else t_balance = '0';
+      $('#hive_balance').text(hive_balance);
+      $('#t_balance').text(t_balance);
+    } else {
+      $('#balances').remove();
+    }
 
-    const sell_open_orders = await getData('market', 'sellBook', {
-      account: user,
-      symbol
-    });
-    const buy_open_orders = await getData('market', 'buyBook', {
-      account: user,
-      symbol
-    });
+
+    const sell_open_orders = [];
+    const buy_open_orders = [];
+    if (user !== null) {
+      sell_open_orders.push(...await getData('market', 'sellBook', {
+        account: user,
+        symbol
+      }));
+
+      buy_open_orders.push(...await getData('market', 'buyBook', {
+        account: user,
+        symbol
+      }));
+    }
+
 
     if (!sell_open_orders.length && !buy_open_orders.length) {
       $('#open_orders').append(
@@ -316,7 +339,7 @@
           <td>${parseFloat(order.quantity)}</td>
           <td>${parseFloat(order.price)}</td>
           <td>${parseFloat(BigNumber(order.quantity).multipliedBy(order.price).toFixed(8))}</td>
-          <td><button type="button" class="btn btn-danger btn-sm">Cancel</button></td>
+          <td><button type="button" data-type="sell" data-id="${order.txId}" class="btn btn-danger btn-sm cancel">Cancel</button></td>
         </tr>
         `
       );
@@ -332,7 +355,7 @@
           <td>${parseFloat(order.quantity)}</td>
           <td>${parseFloat(order.price)}</td>
           <td>${parseFloat(BigNumber(order.quantity).multipliedBy(order.price).toFixed(8))}</td>
-          <td><button type="button" class="btn btn-danger btn-sm">Cancel</button></td>
+          <td><button type="button" data-type="buy" data-id="${order.txId}" class="btn btn-danger btn-sm cancel">Cancel</button></td>
         </tr>
         `
       );
@@ -385,6 +408,39 @@
 
     $('#card_loading').remove();
     $('#pg').removeClass('d-none');
+
+    $(document).on('click', '.cancel', function () {
+      if (!window.hive_keychain) toast('failure', 'Hive Keychain not installed');
+      else {
+        const type = $(this).data('type');
+        const id = $(this).data('id');
+        const obj = {
+          contractName: 'market',
+          contractAction: 'cancel',
+          contractPayload: {
+            type,
+            id
+          }
+        };
+        window.hive_keychain.requestCustomJson(
+          user,
+          'ssc-mainnet-hive',
+          'active',
+          JSON.stringify(obj),
+          'Cancel Market Order',
+          async function (response) {
+            if (response.error) {
+              toast('failure', 'An error occured, please try again');
+              return;
+            }
+
+            toast('success', 'Successfully canceled order');
+            await pushPage(url.href, response.result.id);
+            return;
+          }
+        )
+      }
+    });
   }
   tokens_page();
 </script>
