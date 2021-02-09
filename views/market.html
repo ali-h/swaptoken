@@ -159,11 +159,12 @@
     <table class="table darker table-borderless">
       <thead>
         <tr>
-          <th style="width: 20%;">DATE</th>
+          <th style="width: 50%;">DATE</th>
           <th style="width: 10%;">TYPE</th>
-          <th style="width: 20%;"><span class="t_n"></span></th>
-          <th style="width: 20%;">PRICE</th>
-          <th style="width: 30%;">TOTAL HIVE</th>
+          <th style="width: 15%;"><span class="t_n"></span></th>
+          <th style="width: 10%;">PRICE</th>
+          <th style="width: 10%;">TOTAL HIVE</th>
+          <th style="width: 5%;"></th>
         </tr>
       </thead>
       <tbody id="open_orders">
@@ -172,18 +173,18 @@
   </div>
 
   <div class="d-flex flex-column w-100">
-    <span class="big">Trade History</span>
+    <span class="big">Trades History</span>
     <table class="table darker table-borderless">
       <thead>
         <tr>
-          <th style="width: 20%;">DATE</th>
+          <th style="width: 50%;">DATE</th>
           <th style="width: 10%;">TYPE</th>
-          <th style="width: 20%;"><span class="t_n"></span></th>
-          <th style="width: 20%;">PRICE</th>
-          <th style="width: 30%;">TOTAL HIVE</th>
+          <th style="width: 15%;"><span class="t_n"></span></th>
+          <th style="width: 10%;">PRICE</th>
+          <th style="width: 15%;">TOTAL HIVE</th>
         </tr>
       </thead>
-      <tbody id="trade_history">
+      <tbody id="trades_history">
       </tbody>
     </table>
   </div>
@@ -244,7 +245,7 @@
                 <td>${parseFloat(total_hive.toFixed(5))}</td>
                 <td>${parseFloat(hive.toFixed(5))}</td>
                 <td>${parseFloat(quantity)}</td>
-                <td class="select_market text-right"><a href="#">${BigNumber(price).toFixed(6)}</a></td>
+                <td class="select_market text-right"><span>${BigNumber(price).toFixed(6)}</span></td>
               </tr>
               `
             );
@@ -252,7 +253,7 @@
             $(`#sell_book`).append(
               `
               <tr>
-                <td class="select_market"><a href="#">${BigNumber(price).toFixed(6)}</a></td>
+                <td class="select_market"><span>${BigNumber(price).toFixed(6)}</span></td>
                 <td>${parseFloat(quantity)}</td>
                 <td>${parseFloat(hive.toFixed(5))}</td>
                 <td>${parseFloat(total_hive.toFixed(5))}</td>
@@ -285,23 +286,94 @@
     $('#hive_balance').text(hive_balance);
     $('#t_balance').text(t_balance);
 
-    let open_orders = [];
-    open_orders.push(...await getData('market', 'sellBook', {
+    const sell_open_orders = await getData('market', 'sellBook', {
       account: user,
       symbol
-    }));
-    open_orders.push(...await getData('market', 'buyBook', {
-      account: user,
-      symbol
-    }));
-
-    // sort the orders with time (desc)
-    open_orders.sort(function (a, b) {
-      if (a.timestamp < b.timestamp) return 1;
-      if (b.timestamp < a.timestamp) return -1;
-
-      return 0;
     });
+    const buy_open_orders = await getData('market', 'buyBook', {
+      account: user,
+      symbol
+    });
+
+    if (!sell_open_orders.length && !buy_open_orders.length) {
+      $('#open_orders').append(
+        `
+        <tr>
+          <td colspan="6">No open orders found</td>
+        </tr>
+        `
+      );
+    }
+
+    for (let x = 0; x < sell_open_orders.length; x += 1) {
+      const order = sell_open_orders[x];
+      let d = new Date(order.timestamp * 1000);
+      $('#open_orders').append(
+        `
+        <tr>
+          <td>${d}</td>
+          <td class="text-danger">SELL</td>
+          <td>${parseFloat(order.quantity)}</td>
+          <td>${parseFloat(order.price)}</td>
+          <td>${parseFloat(BigNumber(order.quantity).multipliedBy(order.price).toFixed(8))}</td>
+          <td><button type="button" class="btn btn-danger btn-sm">Cancel</button></td>
+        </tr>
+        `
+      );
+    }
+    for (let x = 0; x < buy_open_orders.length; x += 1) {
+      const order = buy_open_orders[x];
+      let d = new Date(order.timestamp * 1000);
+      $('#open_orders').append(
+        `
+        <tr>
+          <td>${d}</td>
+          <td class="text-success">BUY</td>
+          <td>${parseFloat(order.quantity)}</td>
+          <td>${parseFloat(order.price)}</td>
+          <td>${parseFloat(BigNumber(order.quantity).multipliedBy(order.price).toFixed(8))}</td>
+          <td><button type="button" class="btn btn-danger btn-sm">Cancel</button></td>
+        </tr>
+        `
+      );
+    }
+
+    const trades_history = await ssc.find(
+      'market',
+      'tradesHistory',
+      {
+        symbol,
+      },
+      25,
+      0,
+      [{index: "_id", descending: true}]
+    );
+
+    if (!trades_history.length) {
+      $('#trades_history').append(
+        `
+        <tr>
+          <td colspan="6">No trade history found</td>
+        </tr>
+        `
+      );
+    }
+    
+    for (let x = 0; x < trades_history.length; x += 1) {
+      const trade = trades_history[x];
+      let d = new Date(trade.timestamp * 1000);
+      $('#trades_history').append(
+        `
+        <tr>
+          <td>${d}</td>
+          <td class="${trade.type === 'buy' ? 'text-success' : 'text-danger'}">${trade.type.toUpperCase()}</td>
+          <td>${parseFloat(trade.quantity)}</td>
+          <td>${parseFloat(trade.price)}</td>
+          <td>${parseFloat(BigNumber(trade.quantity).multipliedBy(trade.price).toFixed(8))}</td>
+        </tr>
+        `
+      );
+    }
 
     $('.t_n').each(function () {
       $(this).text(symbol);
