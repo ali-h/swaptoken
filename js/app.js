@@ -4,10 +4,14 @@ $(window).bind('load', async () => {
 });
 
 // login
+$(document).on('keyup', '#login_username', function (e) {
+  if (e.keyCode === 13) $('#login_button').click();
+});
+
 $(document).on('click', '#login_button', function () {
   const username = $('#login_username').val();
 
-  if (!window.hive_keychain) toast('failure', 'Hive Keychain connection failed');
+  if (!window.hive_keychain) toast('failure', 'Hive Keychain not installed');
   else {
     hive_keychain.requestSignBuffer(
       username,
