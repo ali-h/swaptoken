@@ -101,9 +101,17 @@ const pushURL = function (href) {
 }
 
 // pushes the page into the URL without refreshing
-const pushPage = async function (href) {
+const pushPage = async function (href, id = null) {
   $('#loading').removeClass('d-none');
   $('#app').addClass('d-none');
+
+  let result = null;
+  if (id) {
+    do {
+      result = await ssc.getTransactionInfo(id);
+    } while (result === null);
+  }
+
   history.pushState({}, document.title, href);
   await stateManage();
 }
