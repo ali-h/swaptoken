@@ -1,4 +1,4 @@
-const ACCOUNT = 'ali.dev';
+const ACCOUNT = 'swaptoken';
 
 $(window).bind('load', async () => {
   await refreshUser();
