@@ -112,7 +112,7 @@
     $('#search').removeClass('d-none');
     $('table').removeClass('d-none');
 
-    $(document).on('keyup', '#search', function () {
+    $('#search').on('keyup', function () {
       const searchWord = $(this).val().toLowerCase().trim();
       const filteredTokens = [];
       for (const token of list) {
