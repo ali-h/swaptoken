@@ -101,10 +101,10 @@ th {
 .input-group {
   margin-bottom: 0.3em;
 }
-.select_market span {
+.select_market {
   cursor: pointer;
   color: #a3daff;
 }
-.select_market span:hover {
+.select_market:hover {
   text-decoration: underline;
 }

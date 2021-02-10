@@ -91,11 +91,65 @@
   <div class="dark dark_secondary logged_in">
     <div class="container pt-2 pb-2 d-flex align-items-center justify-content-between">
       <div>
-        <span class="text-white" id="user_balance">0 SWAP.HIVE</span>
+        <span class="text-white user_balance">0 SWAP.HIVE</span>
       </div>
       <div>
-        <button type="button" class="btn btn-warning btn-sm" id="deposit_button">Deposit</button>
-        <button type="button" class="btn btn-warning btn-sm" id="withdraw_button">Withdraw</button>
+        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#deposit_modal">Deposit</button>
+        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#withdraw_modal">Withdraw</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="withdraw_modal">
+    <div class="modal-dialog">
+      <div class="modal-content dark text-white">
+        <div class="modal-header">
+          <h5 class="modal-title primary">WITHDRAW</h5>
+          <button type="button" class="close" data-dismiss="modal">
+            <span>&times;</span>
+          </button>
+        </div>
+        <div class="modal-body d-flex flex-column">
+          <span>Balance: <span class="user_balance">0 SWAP.HIVE</span></span>
+          <span class="mb-2">1% Fee | <a target= "_blank" href="https://peakd.com/@swaptoken/wallet/hive">Check Liquidity</a></span>
+
+          <div class="input-group">
+            <input id="withdraw_quantity" type="number" placeholder="0" class="form-control bg-dark text-white">
+            <div class="input-group-append">
+              <span class="input-group-text">SWAP.HIVE</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-warning w-100" id="withdraw">Withdraw SWAP.HIVE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="deposit_modal">
+    <div class="modal-dialog">
+      <div class="modal-content dark text-white">
+        <div class="modal-header">
+          <h5 class="modal-title primary">DEPOSIT</h5>
+          <button type="button" class="close" data-dismiss="modal">
+            <span>&times;</span>
+          </button>
+        </div>
+        <div class="modal-body d-flex flex-column">
+          <span>1% Fee | <span class="select_market" id="liquid_deposit">Check Liquidity</span></span>
+          <span class="mb-2"><span >Current Liquidity: <span id="liquid_d">?? SWAP.HIVE</span></span></span>
+
+          <div class="input-group">
+            <input id="deposit_quantity" type="number" placeholder="0" class="form-control bg-dark text-white">
+            <div class="input-group-append">
+              <span class="input-group-text">HIVE</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-warning w-100" id="deposit">Deposit HIVE</button>
+        </div>
       </div>
     </div>
   </div>
