@@ -39,7 +39,7 @@
           <span>Price</span>
         </div>
         <div class="input-group">
-          <input id="buy_price" type="number" placeholder="0.00" class="form-control">
+          <input id="buy_price" type="number" placeholder="0" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text"><span class="t_n"></span>/HIVE</span>
           </div>
@@ -51,7 +51,7 @@
           <span>Quantity</span>
         </div>
         <div class="input-group">
-          <input id="buy_quantity" type="number" placeholder="0.00" class="form-control">
+          <input id="buy_quantity" type="number" placeholder="0" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text t_n"></span>
           </div>
@@ -63,7 +63,7 @@
           <span>Total</span>
         </div>
         <div class="input-group">
-          <input id="buy_total" disabled type="number" placeholder="0.00" class="form-control">
+          <input id="buy_total" disabled type="number" placeholder="0" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text">HIVE</span>
           </div>
@@ -81,7 +81,7 @@
           <span>Price</span>
         </div>
         <div class="input-group">
-          <input id="sell_price" type="number" placeholder="0.00" class="form-control">
+          <input id="sell_price" type="number" placeholder="0" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text"><span class="t_n"></span>/HIVE</span>
           </div>
@@ -93,7 +93,7 @@
           <span>Quantity</span>
         </div>
         <div class="input-group">
-          <input id="sell_quantity" type="number" placeholder="0.00" class="form-control">
+          <input id="sell_quantity" type="number" placeholder="0" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text t_n"></span>
           </div>
@@ -105,7 +105,7 @@
           <span>Total</span>
         </div>
         <div class="input-group">
-          <input id="sell_total" disabled type="number" placeholder="0.00" class="form-control">
+          <input id="sell_total" disabled type="number" placeholder="0" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text">HIVE</span>
           </div>
@@ -257,7 +257,7 @@
                 <td>${parseFloat(total_hive.toFixed(5))}</td>
                 <td>${parseFloat(hive.toFixed(5))}</td>
                 <td>${parseFloat(quantity)}</td>
-                <td class="select_market text-right"><span>${BigNumber(price).toFixed(6)}</span></td>
+                <td class="text-right"><span class="select_market">${BigNumber(price).toFixed(6)}</span></td>
               </tr>
               `
             );
@@ -265,7 +265,7 @@
             $(`#sell_book`).append(
               `
               <tr>
-                <td class="select_market"><span>${BigNumber(price).toFixed(6)}</span></td>
+                <td><span class="select_market">${BigNumber(price).toFixed(6)}</span></td>
                 <td>${parseFloat(quantity)}</td>
                 <td>${parseFloat(hive.toFixed(5))}</td>
                 <td>${parseFloat(total_hive.toFixed(5))}</td>
@@ -496,7 +496,7 @@
             await pushPage(url.href, response.result.id);
             return;
           }
-        )
+        );
       }
     });
 
@@ -529,7 +529,7 @@
             await pushPage(url.href, response.result.id);
             return;
           }
-        )
+        );
       }
     });
   }
