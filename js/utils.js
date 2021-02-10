@@ -1,5 +1,6 @@
 let toast_id = 0;
 let user = null;
+let balance = '0';
 const only_login_pages = ['wallet'];
 const no_access_pages = ['unauthorized'];
 const ssc = new SSC('https://api.hive-engine.com/rpc');
@@ -106,13 +107,16 @@ const refreshUser = async function () {
 
   if (user) {
     // get the users utility balance
-    let balance = '0 SWAP.HIVE'
     const res = await ssc.findOne('tokens', 'balances', {
       account: user,
       symbol: 'SWAP.HIVE'
     });
-    if (res) balance = `${n(res.balance)} SWAP.HIVE`;
-    $("#user_balance").text(balance);
+    if (res) balance = res.balance;
+    else balance = '0';
+
+    $('.user_balance').each(function () {
+      $(this).text(`${n(balance)} SWAP.HIVE`);
+    });
 
     $('#login_nav').addClass('d-none');
     $('#userNav').text(`@${user}`);
