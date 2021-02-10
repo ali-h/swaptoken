@@ -63,7 +63,7 @@
           <span>Total</span>
         </div>
         <div class="input-group">
-          <input id="buy_total" type="number" placeholder="0.00" class="form-control">
+          <input id="buy_total" disabled type="number" placeholder="0.00" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text">HIVE</span>
           </div>
@@ -71,7 +71,7 @@
       </div>
 
       <div>
-        <button type="button" class="btn btn-success float-right" id="buy">Buy</button>
+        <button type="button" disabled class="btn btn-success float-right" id="buy">Buy</button>
       </div>
     </div>
     <div class="d-flex flex-column flex-grow-1 ml-3">
@@ -105,7 +105,7 @@
           <span>Total</span>
         </div>
         <div class="input-group">
-          <input id="sell_total" type="number" placeholder="0.00" class="form-control">
+          <input id="sell_total" disabled type="number" placeholder="0.00" class="form-control">
           <div class="input-group-append">
             <span class="input-group-text">HIVE</span>
           </div>
@@ -113,7 +113,7 @@
       </div>
 
       <div>
-        <button type="button" class="btn btn-danger float-right" id="sell">Sell</button>
+        <button type="button" disabled class="btn btn-danger float-right" id="sell">Sell</button>
       </div>
     </div>
   </div>
@@ -194,15 +194,15 @@
 </div>
 
 <script>
-  async function tokens_page () {
+  async function market_page () {
     const url = new URL(location.href);
-    const symbol = url.searchParams.get('symbol').toUpperCase();
+    let symbol = url.searchParams.get('symbol');
 
     if (!symbol) {
       url.searchParams.append('symbol', 'BEE');
       await pushPage(url.href);
       return;
-    }
+    } else symbol = symbol.toUpperCase();
 
     $('#token, #tokenERR').attr('placeholder', symbol);
     $('#token, #tokenERR').on('keyup', async function (e) {
@@ -229,10 +229,10 @@
     const sellBook = [];
     const buyOrders = await ssc.find('market', 'buyBook', {
       symbol
-    }, 100, 0, [{index: "priceDec", descending: true}]);
+    }, 500, 0, [{index: "priceDec", descending: true}]);
     const sellOrders = await ssc.find('market', 'sellBook', {
       symbol
-    }, 100, 0, [{index: "priceDec", descending: false}]);
+    }, 500, 0, [{index: "priceDec", descending: false}]);
 
     function buildBook (type, Orders) {
       let id = 0;
@@ -286,12 +286,14 @@
     buildBook('buy', buyOrders);
     buildBook('sell', sellOrders);
 
+    let hive_balance = '0';
+    let t_balance = '0';
     if (user !== null) {
       const balances = await getData('tokens', 'balances', {
         account: user
       });
-      let hive_balance = balances.find(el => el.symbol === 'SWAP.HIVE');
-      let t_balance = balances.find(el => el.symbol === symbol);
+      hive_balance = balances.find(el => el.symbol === 'SWAP.HIVE');
+      t_balance = balances.find(el => el.symbol === symbol);
       if (hive_balance) hive_balance = hive_balance.balance;
       else hive_balance = '0';
       if (t_balance) t_balance = t_balance.balance;
@@ -409,7 +411,96 @@
     $('#card_loading').remove();
     $('#pg').removeClass('d-none');
 
-    $(document).on('click', '.cancel', function () {
+    function updateTrade () {
+      let total_el, price_el, quantity_el, type;
+      if ($(this).attr('id') === 'sell_quantity'
+        || $(this).attr('id') === 'sell_price') {
+        type = 'sell';
+        total_el = $('#sell_total');
+        price_el = $('#sell_price');
+        quantity_el = $('#sell_quantity');
+      } else {
+        type = 'buy';
+        total_el = $('#buy_total');
+        price_el = $('#buy_price');
+        quantity_el = $('#buy_quantity');
+      }
+
+      const price = price_el.val();
+      const quantity = quantity_el.val();
+      let total = '0';
+
+      if (BigNumber(quantity).gt(0)
+        && BigNumber(price).gt(0)) {
+        total = BigNumber(price)
+          .multipliedBy(quantity)
+          .toFixed(8);
+
+        if (type === 'sell') {
+          if (BigNumber(t_balance).gte(quantity)) $('#sell').removeAttr('disabled');
+          else $('#sell').attr('disabled', '');
+        } else {
+          if (BigNumber(hive_balance).gte(total)) $('#buy').removeAttr('disabled');
+          else $('#buy').attr('disabled', '');
+        }
+      }
+
+      total_el.val(parseFloat(total));
+    }
+
+    $('#sell_quantity, #buy_quantity').on('keyup', updateTrade);
+    $('#sell_quantity, #buy_quantity').on('change', updateTrade);
+    $('#sell_price, #buy_price').on('keyup', updateTrade);
+    $('#sell_price, #buy_price').on('change', updateTrade);
+
+    $('.select_market').on('click', function () {
+      $('#buy_price, #sell_price').val($(this).text()).change();
+    });
+
+    $('#buy, #sell').on('click', function () {
+      const type = $(this).attr('id');
+      let price, quantity;
+      if (type === 'sell') {
+        price = $('#sell_price').val();
+        quantity = $('#sell_quantity').val();
+      } else {
+        price = $('#buy_price').val();
+        quantity = $('#buy_quantity').val();
+      }
+
+      const obj = {
+        contractName: 'market',
+        contractAction: type,
+        contractPayload: {
+          price,
+          quantity,
+          symbol
+        }
+      }
+
+      if (!window.hive_keychain) toast('failure', 'Hive Keychain not installed');
+      else {
+        window.hive_keychain.requestCustomJson(
+          user,
+          'ssc-mainnet-hive',
+          'active',
+          JSON.stringify(obj),
+          `${type.charAt(0).toUpperCase() + type.slice(1)} Order`,
+          async function (response) {
+            if (response.error) {
+              toast('failure', 'An error occured, please try again');
+              return;
+            }
+
+            toast('success', `Successfully placed ${type} order`);
+            await pushPage(url.href, response.result.id);
+            return;
+          }
+        )
+      }
+    });
+
+    $('.cancel').on('click', function () {
       if (!window.hive_keychain) toast('failure', 'Hive Keychain not installed');
       else {
         const type = $(this).data('type');
@@ -442,5 +533,5 @@
       }
     });
   }
-  tokens_page();
+  market_page();
 </script>
