@@ -236,13 +236,6 @@
       return;
     }
 
-    const buyOrders = await ssc.find('market', 'buyBook', {
-      symbol
-    }, 200, 0, [{index: "priceDec", descending: true}]);
-    const sellOrders = await ssc.find('market', 'sellBook', {
-      symbol
-    }, 200, 0, [{index: "priceDec", descending: false}]);
-
     var ctx_candle = document.getElementById('candle_chart').getContext('2d');
     var ctx_volume = document.getElementById('volume_chart').getContext('2d');
     var ctx_depth = document.getElementById('depth_chart').getContext('2d');
@@ -333,12 +326,110 @@
       }
     });
 
-    $('#candle, #depth, #volume').on('click', function () {
-      $('canvas').each(function () {
-        $(this).hide();
-      });
-      const name = $(this).attr('id');
-      $(`#${name}_chart`).show();
+    const buyOrders = await ssc.find('market', 'buyBook', {
+      symbol
+    }, 200, 0, [{index: "priceDec", descending: true}]);
+    const sellOrders = await ssc.find('market', 'sellBook', {
+      symbol
+    }, 200, 0, [{index: "priceDec", descending: false}]);
+
+    const price_labels = [];
+    const buyLabels = [];
+    const sellLabels = [];
+    const buyDataset = [];
+    const sellDataset = [];
+
+    // function buildBook (element) {
+    //   const price = parseFloat(element.price);
+    //   const type = element.type;
+    //   const data = depth_map[price]
+    //   ? depth_map[price]
+    //   : {
+    //     buy: null,
+    //     sell: null
+    //   };
+    //   data[type] = BigNumber(data[type] ? data[type] : 0)
+    //     .plus(element.quantity).toString();
+    //   depth_map[price] = data;
+    // }
+    
+    function buildPriceLabel (element) {
+      const price = parseFloat(element.price);
+      if (!price_labels.includes(price))
+        price_labels.push(price);
+
+      if (!buyLabels.includes(price) && element.type === 'buy')
+        buyLabels.push(price);
+
+      if (!sellLabels.includes(price) && element.type === 'sell')
+        sellLabels.push(price);
+    }
+
+    buyOrders.forEach(el => el.type = 'buy');
+    sellOrders.forEach(el => el.type = 'sell');
+    buyOrders.forEach(buildPriceLabel);
+    sellOrders.forEach(buildPriceLabel);
+
+    for (let i = 0; i < price_labels.length; i += 1) {
+      const price = price_labels[i];
+      const matchingBuyOrders = buyOrders.filter(el => parseFloat(el.price) === price);
+      const matchingSellOrders = sellOrders.filter(el => parseFloat(el.price) === price);
+
+      let buy = null;
+      let sell = null;
+
+      if (matchingBuyOrders.length) {
+        let quantity = 0;
+        matchingBuyOrders.forEach(el => quantity += parseFloat(el.quantity));
+        let previousQuantity = buyDataset[i - 1] || 0;
+        quantity += previousQuantity;
+        buy = quantity;
+      }
+
+      if (matchingSellOrders.length) {
+        let quantity = 0;
+        matchingSellOrders.forEach(el => quantity += parseFloat(el.quantity));
+        let previousQuantity = sellDataset[i - 1] || 0;
+        quantity += previousQuantity;
+        sell = quantity;
+      }
+
+      buyDataset.push(buy);
+      sellDataset.push(sell);
+    }
+
+    buyLabels.sort(function(a, b) { return a - b });
+    buyDataset.sort(function(a, b) { return b - a });
+
+    var depth_chart = new Chart(ctx_depth, {
+      type: 'line',
+      data: {
+        labels: buyLabels.concat(sellLabels),
+        datasets: [
+          {
+            label: 'Buy',
+            // stepped: 'after',
+            borderColor: '#3AC569',
+            backgroundColor: '#56A902',
+            fill: true,
+            data: buyDataset,
+          },
+          {
+            label: 'Sell',
+            // stepped: 'before',
+            borderColor: '#F94E3F',
+            backgroundColor: '#FF5F2E',
+            fill: true,
+            data: sellDataset,
+          }
+        ]
+      },
+      options: {
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        }
+      }
     });
 
     function buildBook (type, Orders) {
@@ -517,6 +608,14 @@
 
     $('#card_loading').remove();
     $('#pg').removeClass('d-none');
+
+    $('#candle, #depth, #volume').on('click', function () {
+      $('canvas').each(function () {
+        $(this).hide();
+      });
+      const name = $(this).attr('id');
+      $(`#${name}_chart`).show();
+    });
 
     function updateTrade () {
       let total_el, price_el, quantity_el, type;
