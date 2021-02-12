@@ -30,6 +30,17 @@
       <span id="volume"></span>
     </div>
   </header>
+
+  <div class="d-flex w-100 mb-2">
+    <canvas id="candle_chart"></canvas>
+    <canvas id="volume_chart" style="display: none;"></canvas>
+    <canvas id="depth_chart" style="display: none;"></canvas>
+  </div>
+  <div class="d-flex justify-content-center mb-2">
+    <button type="button" class="btn btn-info btn-sm" id="candle">Candlestick</button>
+    <button type="button" class="btn btn-info btn-sm" id="depth">Depth</button>
+    <button type="button" class="btn btn-info btn-sm" id="volume">Volume</button>
+  </div>
   
   <div class="d-flex w-100 mb-2">
     <div class="d-flex flex-column flex-grow-1 mr-3">
@@ -225,14 +236,110 @@
       return;
     }
 
-    const buyBook = [];
-    const sellBook = [];
     const buyOrders = await ssc.find('market', 'buyBook', {
       symbol
-    }, 500, 0, [{index: "priceDec", descending: true}]);
+    }, 200, 0, [{index: "priceDec", descending: true}]);
     const sellOrders = await ssc.find('market', 'sellBook', {
       symbol
-    }, 500, 0, [{index: "priceDec", descending: false}]);
+    }, 200, 0, [{index: "priceDec", descending: false}]);
+
+    var ctx_candle = document.getElementById('candle_chart').getContext('2d');
+    var ctx_volume = document.getElementById('volume_chart').getContext('2d');
+    var ctx_depth = document.getElementById('depth_chart').getContext('2d');
+    ctx_candle.canvas.width = 1110;
+    ctx_candle.canvas.height = 400;
+    ctx_volume.canvas.width = 1110;
+    ctx_volume.canvas.height = 400;
+    ctx_depth.canvas.width = 1110;
+    ctx_depth.canvas.height = 400;
+    const response = await axios.get(`https://accounts.hive-engine.com/marketHistory?symbol=${symbol}`);
+    const market_history = [];
+    const volume_history_hive = [];
+    const volume_history_dates = [];
+    const volume_history_token = [];
+    for (let c = 59; c >= 0; c -= 1) {
+      const data = response.data[c];
+
+      market_history.push({
+        t: (data.timestamp * 1000),
+        o: data.openPrice,
+        h: data.highestPrice,
+        l: data.lowestPrice,
+        c: data.closePrice
+      });
+    }
+
+    function formatDate(date) {
+      var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
+
+      if (month.length < 2) 
+        month = '0' + month;
+      if (day.length < 2) 
+        day = '0' + day;
+
+      return [month, day, year].join('/');
+    }
+
+    for (let v = 29; v >= 0; v -= 1) {
+      const data = response.data[v];
+
+      volume_history_hive.push(data.volumeSteem);
+      volume_history_token.push(data.volumeToken);
+      volume_history_dates.push(formatDate(data.timestamp * 1000));
+    }
+
+    var candle_chart = new Chart(ctx_candle, {
+      type: 'candlestick',
+      data: {
+        datasets: [{
+          label: '',
+          data: market_history
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {
+            display: false,            
+          },
+        }
+      }
+    });
+
+    var volume_chart = new Chart(ctx_volume, {
+      type: 'bar',
+      data: {
+        labels: volume_history_dates,
+        datasets: [
+          {
+            label: 'SWAP.HIVE',
+            data: volume_history_hive,
+            backgroundColor: '#8142FF'
+          },
+          {
+            label: symbol,
+            data: volume_history_token,
+            backgroundColor: '#FF9124'
+          }
+        ]
+      },
+      options: {
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        }
+      }
+    });
+
+    $('#candle, #depth, #volume').on('click', function () {
+      $('canvas').each(function () {
+        $(this).hide();
+      });
+      const name = $(this).attr('id');
+      $(`#${name}_chart`).show();
+    });
 
     function buildBook (type, Orders) {
       let id = 0;
