@@ -14,16 +14,16 @@
 <table class="table darker table-responsive table-borderless d-none">
   <thead>
     <tr>
-      <th style="width: 5%;">SYMBOL</th>
-      <th style="width: 35%;">NAME</th>
-      <th style="width: 10%;">PRICE</th>
-      <th style="width: 15%;">M CAP</th>
-      <th style="width: 5%;">% CHANGE</th>
-      <th style="width: 15%;">24H VOL</th>
+      <th style="width: 5%;" class="sorter" data-name="symbol">SYMBOL</th>
+      <th style="width: 35%;" class="sorter" data-name="name">NAME</th>
+      <th style="width: 10%;" class="sorter" data-name="price">PRICE</th>
+      <th style="width: 15%;" class="sorter" data-name="marketCap">M CAP</th>
+      <th style="width: 5%;" class="sorter" data-name="change">% CHANGE</th>
+      <th style="width: 15%;" class="sorter" data-name="volume">24H VOL</th>
       <th style="width: 5%;"></th>
     </tr>
   </thead>
-  <tbody id="tokens_table">
+  <tbody id="tokens_table" data-sort="volume" data-sort-order="desc">
   </tbody>
 </table>
 
@@ -34,12 +34,11 @@
 
     function renderTable(list) {
       let table = ``;
-      const isChangePositive = (change) => {
+      getChangeClass = (change) => {
         const n = change.replace('%', '');
-        if (BigNumber(n).lt(0)) return false;
-
-        return true;
-      };
+        if (BigNumber(n).lt(0)) return 'text-danger';
+        else if (BigNumber(n).gt(0)) return 'text-success';
+      }
 
       for (const token of list) {
         table +=
@@ -51,10 +50,23 @@
           <td>
             $${n(token.price)}
           </td>
-          <td>$${n(token.marketCap)}</td>
-          <td class="${isChangePositive(token.change) ? 'text-success' : 'text-danger'}">${token.change}</td>
-          <td>$${n(token.volume)}</td>
+          <td>
+            $${n(token.marketCap)}
+          </td>
+          <td class="${getChangeClass(token.change)}">
+            ${token.change}
+          </td>
+          <td data-sort-name="${token.volume}">
+            $${n(token.volume)}
+          </td>
           <td class="d-flex flex-row float-right">
+            <a type="button" href="?p=info&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Info">
+              <svg width="1.3em" height="1.3em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+                <circle cx="8" cy="4.5" r="1"/>
+              </svg>
+            </a>
             <a type="button" href="?p=market&symbol=${token.symbol}" class="btn tbl_btn pushBTN" title="Market">
               <svg width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
@@ -75,27 +87,26 @@
       const price = metric ?
         BigNumber(metric.lastPrice)
           .multipliedBy(hivePrice)
-          .toString()
         : '0';
       const marketCap = BigNumber(token.circulatingSupply)
         .multipliedBy(price)
         .toFixed(3)
-        .toString();
-      const change = metric ? metric.priceChangePercent : '0%';
+      let change = metric ? metric.priceChangePercent : '0%';
+      if (change === '0.00%') change = '0%';
+      if (change === '0') change = '0%';
       const volume = metric ?
         BigNumber(metric.volume)
           .multipliedBy(hivePrice)
           .toFixed(3)
-          .toString()
         : '0';
-      
+
       list.push({
         symbol: token.symbol,
         name: token.name,
-        price: parseFloat(price).toFixed(5),
-        marketCap,
+        price: parseFloat(BigNumber(price).toFixed(5)),
+        marketCap: parseFloat(marketCap),
         change,
-        volume
+        volume: parseFloat(volume)
       });
     }
 
@@ -123,6 +134,44 @@
 
       // re-render table with filtered records
       renderTable(filteredTokens);
+    });
+
+    $('.sorter').on('click', function () {
+      const newList = Object.create(list);
+      const name = $(this).data('name');
+      const current_sort = $('#tokens_table').data('current-sort');
+      const sort_order = $('#tokens_table').data('sort-order');
+      let current_sort_order = 'asc';
+      if (name === 'symbol'
+        || name === 'name') {
+        newList.sort(function (a, b) {
+          if (a[name] < b[name]) {
+            return -1;
+          }
+          if (a[name] > b[name]) {
+            return 1;
+          }
+          return 0;
+        });
+      } else {
+        newList.sort(function (a, b) {
+          const aC = name === 'change' ? a[name].replace('%', '') : a[name];
+          const bC = name === 'change' ? b[name].replace('%', '') : b[name];
+          if (BigNumber(aC).lt(bC)) return -1;
+          if (BigNumber(bC).lt(aC)) return 1;
+
+          return 0;
+        });
+      }
+
+      if (current_sort === name && sort_order === 'asc') {
+        current_sort_order = 'desc';
+        newList.reverse();
+      }
+
+      $('#tokens_table').data('current-sort', name);
+      $('#tokens_table').data('sort-order', current_sort_order);
+      renderTable(newList);
     });
   }
   tokens_page();

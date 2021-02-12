@@ -1,0 +1,122 @@
+<header class="d-none" id="token_info">
+  <div class="d-flex p-4 dark rounded mb-3">
+    <div class="d-flex mr-5" style="width: 60%;">
+      <img id="icon" height="150" width="150" class="mr-5" />
+      <div class="d-flex flex-column">
+        <h2 id="name"></h2>
+        <a id="url"></a>
+        <p id="desc"></p>
+      </div>
+    </div>
+    <div class="d-flex flex-column ml-5" style="width: 40%;">
+      <div>
+        <strong>Symbol : </strong><span id="symbol"></span>
+      </div>
+      <div>
+        <strong>Issuer : </strong><a id="issuer"></a>
+      </div>
+      <div>
+        <strong>Precision : </strong><span id="precision"></span>
+      </div>
+      <div>
+        <strong>Staking Enabled : </strong><span id="stakingEnabled"></span>
+      </div>
+      <div>
+        <strong>Delegation Enabled : </strong><span id="delegationEnabled"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex p-4 dark rounded">
+    <div class="d-flex flex-column mr-5" style="width: 50%;">
+      <div>
+        <strong>Last Price : </strong><span id="lastPrice"></span>
+      </div>
+      <div>
+        <strong>Ask : </strong><span id="lowestAsk"></span>
+      </div>
+      <div>
+        <strong>Bid : </strong><a id="highestBid"></a>
+      </div>
+      <div>
+        <strong>Volume : </strong><span id="volume"></span>
+      </div>
+    </div>
+    <div class="d-flex flex-column ml-5" style="width: 50%;">
+      <div>
+        <strong>Max Supply : </strong><span id="maxSupply"></span>
+      </div>
+      <div>
+        <strong>Supply : </strong><span id="supply"></span>
+      </div>
+      <div>
+        <strong>Circulating Supply : </strong><a id="circulatingSupply"></a>
+      </div>
+      <div>
+        <strong>Total Staked : </strong><span id="totalStaked"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="card_loading" class="d-flex justify-content-center">
+  <div class="spinner-border"></div>
+</div>
+
+<div id="err" class="d-none text-center">
+  <span>Can't find info for this token</span>
+</div>
+
+<script>
+  async function info_page () {
+    const webURL = new URL(location.href);
+    let symbol = webURL.searchParams.get('symbol');
+
+    if (!symbol) {
+      webURL.searchParams.append('symbol', 'BEE');
+      await pushPage(webURL.href);
+      return;
+    } else symbol = symbol.toUpperCase();
+
+    const token = await ssc.findOne('tokens', 'tokens', {
+      symbol
+    });
+    const metric = await ssc.findOne('market', 'metrics', {
+      symbol
+    });
+
+    if (!token) {
+      $('#card_loading').remove();
+      $('#err').removeClass('d-none');
+      return;
+    }
+
+    for (value of Object.keys(token)) {
+      $(`#${value}`).text(token[value]);
+    }
+
+    for (value of Object.keys(metric)) {
+      $(`#${value}`).text(metric[value]);
+    }
+
+    const {
+      icon,
+      url,
+      desc,
+    } = JSON.parse(token.metadata);
+
+    $('#desc').text(desc);
+    $('#icon').attr('src', icon)
+    $('#url').text(url);
+    $('#url').attr('href', url);
+
+    $('#issuer').text(`@${token.issuer}`);
+    $('#issuer').attr('href', `https://peakd.com/@${token.issuer}`);
+    $('#stakingEnabled').text(token.stakingEnabled ? 'Yes' : 'No');
+    $('#delegationEnabled').text(token.delegationEnabled ? 'Yes' : 'No');
+
+    $('#card_loading').remove();
+    $('#token_info').removeClass('d-none');
+  }
+  info_page();
+</script>

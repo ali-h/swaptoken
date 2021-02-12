@@ -108,3 +108,7 @@ th {
 .select_market:hover {
   text-decoration: underline;
 }
+.sorter {
+  user-select: none;
+  cursor: pointer;
+}
