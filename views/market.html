@@ -250,9 +250,10 @@
     const volume_history_hive = [];
     const volume_history_dates = [];
     const volume_history_token = [];
-    for (let c = 59; c >= 0; c -= 1) {
+    for (let c = 0; c < 60; c += 1) {
       const data = response.data[c];
 
+      if (!data) break;
       market_history.push({
         t: (data.timestamp * 1000),
         o: data.openPrice,
@@ -261,6 +262,7 @@
         c: data.closePrice
       });
     }
+    market_history.reverse();
 
     function formatDate(date) {
       var d = new Date(date),
@@ -276,13 +278,17 @@
       return [month, day, year].join('/');
     }
 
-    for (let v = 29; v >= 0; v -= 1) {
+    for (let v = 0; v < 30; v += 1) {
       const data = response.data[v];
 
+      if (!data) break;
       volume_history_hive.push(data.volumeSteem);
       volume_history_token.push(data.volumeToken);
       volume_history_dates.push(formatDate(data.timestamp * 1000));
     }
+    volume_history_hive.reverse();
+    volume_history_token.reverse();
+    volume_history_dates.reverse();
 
     var candle_chart = new Chart(ctx_candle, {
       type: 'candlestick',
