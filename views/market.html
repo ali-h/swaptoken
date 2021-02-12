@@ -339,20 +339,6 @@
     const buyDataset = [];
     const sellDataset = [];
 
-    // function buildBook (element) {
-    //   const price = parseFloat(element.price);
-    //   const type = element.type;
-    //   const data = depth_map[price]
-    //   ? depth_map[price]
-    //   : {
-    //     buy: null,
-    //     sell: null
-    //   };
-    //   data[type] = BigNumber(data[type] ? data[type] : 0)
-    //     .plus(element.quantity).toString();
-    //   depth_map[price] = data;
-    // }
-    
     function buildPriceLabel (element) {
       const price = parseFloat(element.price);
       if (!price_labels.includes(price))
@@ -432,51 +418,63 @@
       }
     });
 
-    function buildBook (type, Orders) {
-      let id = 0;
-      let hive = '0';
-      let total_hive = '0';
-      let quantity = '0';
-      let price = 0;
-      for (let i = 0; i < Orders.length; i += 1) {
-        const order = Orders[i];
-        if (i === 0) price = parseFloat(order.price);
+    const books = {
+      buyBook: [],
+      sellBook: []
+    };
 
-        const hiveForThis = BigNumber(order.quantity).multipliedBy(price);
-        if (price === parseFloat(order.price)) {
-          quantity = BigNumber(quantity).plus(order.quantity);
-          hive = BigNumber(hive).plus(hiveForThis);
-          total_hive = BigNumber(total_hive).plus(hiveForThis);
+    function buildBook (type, orders) {
+      let prices = [];
+      if (type === 'buy') {
+        prices = buyLabels.reverse();
+      } else {
+        prices = sellLabels;
+      }
+      for (let i = 0; i < 15; i += 1) {
+        const price = prices[i];
+        if (!price) break;
+        const matchingOrders = orders.filter(el => parseFloat(el.price) === price);
+        let quantity = '0';
+        matchingOrders.forEach(el => quantity = BigNumber(quantity).plus(el.quantity).toFixed(8));
+        let hive = BigNumber(quantity)
+          .multipliedBy(price)
+          .toFixed(6);
+        const previousOrder = books[`${type}Book`][i-1];
+        let previousHive = previousOrder ? previousOrder.total_hive : '0';
+        let total_hive = BigNumber(previousHive)
+          .plus(hive)
+          .toFixed(5);
+
+        const o = {
+          price: price.toFixed(6),
+          quantity: parseFloat(quantity),
+          hive: parseFloat(hive),
+          total_hive: parseFloat(total_hive),
+        };
+        books[`${type}Book`].push(o);
+
+        if (type === 'buy') {
+          $(`#buy_book`).append(
+            `
+            <tr>
+              <td>${o.total_hive}</td>
+              <td>${o.hive}</td>
+              <td>${o.quantity}</td>
+              <td class="text-right"><span class="select_market">${o.price}</span></td>
+            </tr>
+            `
+          );
         } else {
-          if (type === 'buy') {
-            $(`#buy_book`).append(
-              `
-              <tr>
-                <td>${parseFloat(total_hive.toFixed(5))}</td>
-                <td>${parseFloat(hive.toFixed(5))}</td>
-                <td>${parseFloat(quantity)}</td>
-                <td class="text-right"><span class="select_market">${BigNumber(price).toFixed(6)}</span></td>
-              </tr>
-              `
-            );
-          } else {
-            $(`#sell_book`).append(
-              `
-              <tr>
-                <td><span class="select_market">${BigNumber(price).toFixed(6)}</span></td>
-                <td>${parseFloat(quantity)}</td>
-                <td>${parseFloat(hive.toFixed(5))}</td>
-                <td>${parseFloat(total_hive.toFixed(5))}</td>
-              </tr>
-              `
-            );
-          }
-          id++;
-          if (id === 15) break;
-          price = parseFloat(order.price);
-          quantity = order.quantity;
-          hive = hiveForThis;
-          total_hive = BigNumber(total_hive).plus(hiveForThis);
+          $(`#sell_book`).append(
+            `
+            <tr>
+              <td><span class="select_market">${o.price}</span></td>
+              <td>${o.quantity}</td>
+              <td>${o.hive}</td>
+              <td>${o.total_hive}</td>
+            </tr>
+            `
+          );
         }
       }
     }
