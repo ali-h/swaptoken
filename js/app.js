@@ -1,6 +1,7 @@
-const ACCOUNT = 'swaptoken';
-
 $(window).bind('load', async () => {
+  $('.fee_show').each(function () {
+    $(this).text(FEE);
+  });
   await refreshUser();
   await stateManage();
 });
