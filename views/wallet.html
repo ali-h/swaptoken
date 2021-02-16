@@ -1,0 +1,158 @@
+<header class="d-flex flex-wrap justify-content-between align-items-center">
+  <div>
+    <span class="big">Wallet</span>
+    <span class="d-block">Estimated Value: $<span id="est_value">0</span></span>
+  </div>
+  <div class="d-flex align-items-center">
+    <input id="search" type="text" placeholder="Search" class="d-none mb-1 ml-3 form-control bg-dark text-white border-0 btn-outline-warning">
+  </div>
+</header>
+
+<div id="card_loading" class="d-flex justify-content-center">
+  <div class="spinner-border"></div>
+</div>
+
+<table class="table darker table-borderless d-none">
+  <thead>
+    <tr>
+      <th style="width: 20%;" class="sorter" data-name="symbol">SYMBOL</th>
+      <th style="width: 20%;" class="sorter" data-name="balance">BALANCE</th>
+      <th style="width: 20%;" class="sorter" data-name="usd_value">USD VALUE</th>
+      <th style="width: 20%;" class="sorter" data-name="change">% CHANGE</th>
+      <th style="width: 20%;" class="sorter" data-name="stake">STAKED</th>
+    </tr>
+  </thead>
+  <tbody id="tokens_table" data-sort="usd_value" data-sort-order="desc">
+  </tbody>
+</table>
+
+<script>
+  async function wallet_page () {
+    const balances = await getData('tokens', 'balances', {
+      account: user
+    });
+    const tokens = await getData('tokens', 'tokens');
+    const metrics = await getData('market', 'metrics');
+    let est_value = '0';
+
+    function renderTable(list) {
+      let table = ``;
+      const isChangePositive = (change) => {
+        const n = change.replace('%', '');
+        if (BigNumber(n).lt(0)) return false;
+
+        return true;
+      };
+
+      for (const token of list) {
+        const info = tokens.find(el => el.symbol === token.symbol);
+        table +=
+        `<tr>
+          <td>${token.symbol}</td>
+          <td>
+            ${n(token.balance)}
+          </td>
+          <td>
+            $${n(token.usd_value)}
+          </td>
+          <td class="${isChangePositive(token.change) ? 'text-success' : 'text-danger'}">${token.change}</td>
+          <td>${info.stakingEnabled ? (token.stake) : '-'}</td>
+        </tr>`;
+      }
+      $('#tokens_table').html(table);
+    }
+
+    const list = [];
+    const hivePrice = await getHivePrice();
+    for (const token of balances) {
+      const metric = metrics.find(el => el.symbol === token.symbol);
+
+      // calculate metric
+      const price = metric ?
+        BigNumber(metric.lastPrice)
+          .multipliedBy(hivePrice)
+          .toString()
+        : '0';
+      const usd_value = BigNumber(token.balance)
+        .multipliedBy(price)
+        .toFixed(3)
+        .toString();
+      est_value = BigNumber(est_value).plus(usd_value);
+      const change = metric ? metric.priceChangePercent : '0%';
+
+      list.push({
+        symbol: token.symbol,
+        balance: token.balance,
+        usd_value,
+        change,
+        stake: token.stake ? token.stake : '0'
+      });
+    }
+
+    $('#est_value').text(est_value);
+
+    // sort the list with USD Value (desc)
+    list.sort(function (a, b) {
+      if (BigNumber(a.usd_value).lt(b.usd_value)) return 1;
+      if (BigNumber(b.usd_value).lt(a.usd_value)) return -1;
+
+      return 0;
+    });
+
+    renderTable(list);
+    $('#card_loading').remove();
+    $('#search').removeClass('d-none');
+    $('table').removeClass('d-none');
+
+    $(document).on('keyup', '#search', function () {
+      const searchWord = $(this).val().toLowerCase().trim();
+      const filteredTokens = [];
+      for (const token of list) {
+        if (token.symbol.toLowerCase().includes(searchWord)) {
+          filteredTokens.push(token);
+        }
+      }
+
+      // re-render table with filtered records
+      renderTable(filteredTokens);
+    });
+
+    $('.sorter').on('click', function () {
+      const newList = Object.create(list);
+      const name = $(this).data('name');
+      const current_sort = $('#tokens_table').data('current-sort');
+      const sort_order = $('#tokens_table').data('sort-order');
+      let current_sort_order = 'asc';
+      if (name === 'symbol') {
+        newList.sort(function (a, b) {
+          if (a[name] < b[name]) {
+            return -1;
+          }
+          if (a[name] > b[name]) {
+            return 1;
+          }
+          return 0;
+        });
+      } else {
+        newList.sort(function (a, b) {
+          const aC = name === 'change' ? a[name].replace('%', '') : a[name];
+          const bC = name === 'change' ? b[name].replace('%', '') : b[name];
+          if (BigNumber(aC).lt(bC)) return -1;
+          if (BigNumber(bC).lt(aC)) return 1;
+
+          return 0;
+        });
+      }
+
+      if (current_sort === name && sort_order === 'asc') {
+        current_sort_order = 'desc';
+        newList.reverse();
+      }
+
+      $('#tokens_table').data('current-sort', name);
+      $('#tokens_table').data('sort-order', current_sort_order);
+      renderTable(newList);
+    });
+  }
+  wallet_page();
+</script>
