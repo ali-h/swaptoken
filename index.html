@@ -25,6 +25,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.1"></script>
   <script src="js/scripts/chartjs-chart-financial.js" type="text/javascript"></script>
 
+  <script src="/js/config.js"></script>
   <script src="/js/utils.js"></script>
   <script src="/js/app.js"></script>
 
@@ -124,7 +125,7 @@
         </div>
         <div class="modal-body d-flex flex-column">
           <span>Balance: <span class="user_balance">0 SWAP.HIVE</span></span>
-          <span class="mb-2">1% Fee | <a target= "_blank" href="https://peakd.com/@swaptoken/wallet/hive">Check Liquidity</a></span>
+          <span class="mb-2"><span class="fee_show">1%</span> | <a target= "_blank" href="https://peakd.com/@swaptoken/wallet/hive">Check Liquidity</a></span>
 
           <div class="input-group">
             <input id="withdraw_quantity" type="number" placeholder="0" class="form-control bg-dark text-white">
@@ -150,7 +151,7 @@
           </button>
         </div>
         <div class="modal-body d-flex flex-column">
-          <span>1% Fee | <span class="select_market" id="liquid_deposit">Check Liquidity</span></span>
+          <span><span class="fee_show">1%</span> Fee | <span class="select_market" id="liquid_deposit">Check Liquidity</span></span>
           <span class="mb-2"><span >Current Liquidity: <span id="liquid_d">?? SWAP.HIVE</span></span></span>
 
           <div class="input-group">
